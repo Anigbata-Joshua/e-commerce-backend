@@ -5,9 +5,8 @@ import rateLimit from 'express-rate-limit';
 import { env } from './config/env.js';
 import errorHandler from './middleware/error.middleware.js';
 import { sanitizeBody } from './utils/sanitize.js';
-
-
-
+import userRoutes from '../src/routes/user.route.js';
+// import merchantRoutes from '../src/routes/merchant.route.js'; // once it exists
 
 const app = express();
 
@@ -56,8 +55,8 @@ app.use(express.json());
 app.use(sanitizeBody);
 
 // 📍 API Routes
-
-
+app.use('/api/users', userRoutes);
+// app.use('/api/merchants', merchantRoutes);
 
 app.use(errorHandler); // must be last
 
