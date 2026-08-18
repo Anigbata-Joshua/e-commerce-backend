@@ -7,6 +7,7 @@ import errorHandler from './middleware/error.middleware.js';
 import { sanitizeBody } from './utils/sanitize.js';
 import userRoutes from './routes/user.route.js';
 import merchantRoutes from './routes/merchant.route.js';
+import categoryRoutes from './routes/category.route.js';
 
 const app = express();
 
@@ -50,6 +51,9 @@ app.use('/api/merchants/register', authLimiter);
 app.use('/api/merchants/login', authLimiter);
 app.use('/api/users/register', authLimiter);
 app.use('/api/users/login', authLimiter);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/categories', categoryRoutes);
+
 
 app.use(express.json());
 app.use(sanitizeBody);
