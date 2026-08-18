@@ -51,16 +51,14 @@ app.use('/api/merchants/register', authLimiter);
 app.use('/api/merchants/login', authLimiter);
 app.use('/api/users/register', authLimiter);
 app.use('/api/users/login', authLimiter);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/categories', categoryRoutes);
-
 
 app.use(express.json());
 app.use(sanitizeBody);
 
 // 📍 API Routes
-app.use('/api/users', userRoutes);
 app.use('/api/merchants', merchantRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/categories', categoryRoutes);
 
 app.use(errorHandler); // must be last
 
