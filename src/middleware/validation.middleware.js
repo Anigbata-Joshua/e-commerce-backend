@@ -24,9 +24,10 @@ const passwordComplexity = z.string()
     .min(6, 'Password must be at least 6 characters long')
     .refine((val) => /[A-Z]/.test(val), 'Password must contain at least one uppercase letter')
     .refine((val) => /[0-9]/.test(val), 'Password must contain at least one number')
+    .refine((val) => /[^A-Za-z0-9]/.test(val), 'Password must contain at least one special character');
+
 
 // ---------- Merchant ----------
-
 export const merchantRegisterSchema = z.object({
     full_name: z.string().min(1, 'full name is required'),
     email: z.string().email('Please enter a valid email address'),
