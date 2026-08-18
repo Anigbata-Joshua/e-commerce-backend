@@ -9,7 +9,7 @@ const MerchantSchema = new mongoose.Schema({
     password: {
         type: String, required: [true, 'Please provide a password'], minlength: [6, 'Password must be at least 6 characters long'], select: false, validate: {
             validator: function (v) { return /[A-Z]/.test(v) && /[0-9]/.test(v) && /[^A-Za-z0-9]/.test(v); },
-            message: 'Password must contain at least one uppercase letter, and number',
+            message: 'Password must contain at least one uppercase letter, one number, and one special character',
         },
     },
     store_name: { type: String, required: [true, 'Please provide a store name'], trim: true },
@@ -24,6 +24,11 @@ const MerchantSchema = new mongoose.Schema({
         instagram: { type: String, default: '' },
     },
     refreshToken: { type: String, default: null, select: false },
+        status: {
+        type: String,
+        enum: ['pending', 'approved', 'suspended'],
+        default: 'pending',
+    },
 
 }, { timestamps: true });
 
