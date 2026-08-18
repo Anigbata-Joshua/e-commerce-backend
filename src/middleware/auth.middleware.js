@@ -4,17 +4,8 @@ import User from '../models/user.model.js';
 import { env } from '../config/env.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
+import { parseCookies } from '../utils/cookies.js';
 
-const parseCookies = (cookieHeader) => {
-    const list = {};
-    if (!cookieHeader) return list;
-
-    cookieHeader.split(';').forEach((cookie) => {
-        const parts = cookie.split('=');
-        list[parts.shift().trim()] = decodeURI(parts.join('='));
-    });
-    return list;
-};
 
 // Shared factory: builds an authenticate middleware for either domain
 // ('merchant' or 'user'), each reading its own cookie name and JWT secret
