@@ -74,76 +74,249 @@ A production-ready, secure, and robust RESTful API built with **Node.js**, **Exp
 
 ## 📍 API Reference
 
+Unless noted otherwise, request bodies are JSON (`Content-Type: application/json`). Fields marked **required** must be present; everything else is optional. `PATCH`/update schemas accept any subset of their fields — only send what you want to change.
+
 ### 🔐 Authentication
 
 All Auth routes support both HTTP-only Cookies and Bearer tokens.
 
 #### Users (Customers)
-- `POST /api/users/register` - Create customer account
-- `POST /api/users/login` - Customer login
-- `POST /api/users/refresh` - Refresh access token
-- `POST /api/users/logout` - Logout and revoke tokens
-- `PATCH /api/users/me` - Update profile *(Auth required)*
-- `PATCH /api/users/me/change-password` - Change password *(Auth required)*
+
+**`POST /api/users/register`** — Create customer account
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `full_name` | string | ✅ | |
+| `email` | string | ✅ | valid email format |
+| `phone` | string | ✅ | |
+| `password` | string | ✅ | min 6 chars; must include an uppercase letter, a number, and a special character |
+
+**`POST /api/users/login`** — Customer login
+| Field | Type | Required |
+|---|---|---|
+| `email` | string | ✅ |
+| `password` | string | ✅ |
+
+**`POST /api/users/refresh`** — Refresh access token
+No body required — reads the refresh token from the `userRefreshToken` cookie, or `refreshToken` in the body as a fallback.
+
+**`POST /api/users/logout`** — Logout and revoke tokens
+Same as above — no body required unless not using cookies.
+
+**`PATCH /api/users/me`** — Update profile *(Auth required)*
+| Field | Type | Required |
+|---|---|---|
+| `full_name` | string | ❌ |
+| `email` | string | ❌ |
+| `phone` | string | ❌ |
+
+**`PATCH /api/users/me/change-password`** — Change password *(Auth required)*
+| Field | Type | Required |
+|---|---|---|
+| `old_password` | string | ✅ |
+| `new_password` | string | ✅ | same complexity rule as registration |
 
 #### Merchants
-- `POST /api/merchants/register` - Register merchant storefront
-- `POST /api/merchants/login` - Merchant login
-- `POST /api/merchants/refresh` - Refresh access token
-- `POST /api/merchants/logout` - Logout and revoke tokens
-- `GET /api/merchants/:id` - Fetch public storefront profile
-- `PATCH /api/merchants/me` - Update store details *(Auth required)*
-- `PATCH /api/merchants/me/change-password` - Change password *(Auth required)*
+
+**`POST /api/merchants/register`** — Register merchant storefront
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `full_name` | string | ✅ | |
+| `email` | string | ✅ | valid email format |
+| `phone` | string | ✅ | |
+| `phones` | string[] | ❌ | additional contact numbers |
+| `password` | string | ✅ | same complexity rule as User |
+| `store_name` | string | ✅ | |
+| `descp` | string | ❌ | store description |
+| `icon` | string | ❌ | image URL |
+| `banner` | string | ❌ | image URL |
+
+New merchants start with `status: "pending"` and must be approved before they can create products.
+
+**`POST /api/merchants/login`** — Merchant login
+| Field | Type | Required |
+|---|---|---|
+| `email` | string | ✅ |
+| `password` | string | ✅ |
+
+**`POST /api/merchants/refresh`** — Refresh access token
+No body required — reads the refresh token from the `merchantRefreshToken` cookie, or `refreshToken` in the body as a fallback.
+
+**`POST /api/merchants/logout`** — Logout and revoke tokens
+No body required unless not using cookies.
+
+**`GET /api/merchants/:id`** — Fetch public storefront profile
+No body — public route.
+
+**`PATCH /api/merchants/me`** — Update store details *(Auth required)*
+| Field | Type | Required |
+|---|---|---|
+| `full_name` | string | ❌ |
+| `email` | string | ❌ |
+| `phone` | string | ❌ |
+| `phones` | string[] | ❌ |
+| `store_name` | string | ❌ |
+| `descp` | string | ❌ |
+| `icon` | string | ❌ |
+| `banner` | string | ❌ |
+| `state` | string | ❌ |
+| `district` | string | ❌ |
+| `social_media` | object | ❌ | `{ x, face_book, instagram }`, all optional strings |
+
+**`PATCH /api/merchants/me/change-password`** — Change password *(Auth required)*
+| Field | Type | Required |
+|---|---|---|
+| `old_password` | string | ✅ |
+| `new_password` | string | ✅ |
 
 ---
 
 ### 📦 Products & Categories
 
 #### Products
-- `GET /api/products` - Browse products with search & pagination (supports filter by `merchant_id`, `category_id`, or `search` string)
-- `GET /api/products/:id` - Get detailed product info
-- `POST /api/products` - Create new product *(Merchant only)*
-- `PATCH /api/products/:id` - Edit product details *(Merchant owner only)*
-- `DELETE /api/products/:id` - Remove product *(Merchant owner only)*
-- `POST /api/products/:id/images` - Upload images (max 5) *(Merchant owner only)*
+
+**`GET /api/products`** — Browse products with search & pagination
+Query params, all optional: `merchant_id`, `category_id`, `search`, `page` (default 1), `limit` (default 20). No body.
+
+**`GET /api/products/:id`** — Get detailed product info
+No body — public route.
+
+**`POST /api/products`** — Create new product *(Merchant only, must be approved)*
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `title` | string | ✅ | |
+| `category_id` | string | ✅ | must be a category owned by this merchant |
+| `price` | number | ✅ | ≥ 0 |
+| `descp` | string | ❌ | |
+| `brand` | string | ❌ | |
+| `quantity` | number | ❌ | integer ≥ 0, default 0 |
+| `images` | string[] | ❌ | image URLs (see also the dedicated image-upload endpoint below) |
+| `currency` | string | ❌ | |
+| `min_qty` | number | ❌ | positive integer |
+| `max_qty` | number | ❌ | positive integer |
+| `discount` | number | ❌ | ≥ 0 |
+| `discount_expiration` | string | ❌ | ISO datetime |
+| `has_refund_policy` | boolean | ❌ | |
+| `has_discount` | boolean | ❌ | |
+| `has_shipment` | boolean | ❌ | |
+| `has_variation` | boolean | ❌ | |
+| `shipping_locations` | string[] | ❌ | |
+| `attrib` | array | ❌ | `[{ type, content: [{ name, value }] }]` |
+| `variations` | array | ❌ | `[{ type, text, content: [{ display: [{type, value}], text }] }]` |
+
+**`PATCH /api/products/:id`** — Edit product details *(Merchant owner only)*
+Same fields as create, all optional — send only what's changing. If `category_id` is included, it's re-verified as belonging to this merchant.
+
+**`DELETE /api/products/:id`** — Remove product *(Merchant owner only)*
+No body.
+
+**`POST /api/products/:id/images`** — Upload images (max 5) *(Merchant owner only)*
+Not JSON — send as `multipart/form-data`. Field name: `images`, type File. Up to 5 files, 5MB each, image types only. Uploaded files are streamed to Cloudinary and their resulting URLs are appended to the product's existing `images` array.
 
 #### Categories
-- `GET /api/categories` - Fetch all categories (supports filter by `merchant_id`)
-- `POST /api/categories` - Create custom category *(Merchant only)*
-- `PATCH /api/categories/:id` - Rename category *(Merchant owner only)*
-- `DELETE /api/categories/:id` - Delete category *(Merchant owner only)*
+
+**`GET /api/categories`** — Fetch all categories
+Query param, optional: `merchant_id`. No body.
+
+**`POST /api/categories`** — Create custom category *(Merchant only)*
+| Field | Type | Required |
+|---|---|---|
+| `name` | string | ✅ |
+| `image` | string | ❌ | image URL |
+
+A merchant cannot have two categories with the same name.
+
+**`PATCH /api/categories/:id`** — Rename category *(Merchant owner only)*
+| Field | Type | Required |
+|---|---|---|
+| `name` | string | ❌ |
+| `image` | string | ❌ |
+
+**`DELETE /api/categories/:id`** — Delete category *(Merchant owner only)*
+No body.
 
 ---
 
 ### 🛒 Cart & Checkout (Customers Only)
 
-- `GET /api/carts` - Retrieve user's current shopping cart
-- `POST /api/carts` - Add item, or update quantity (for matching product and variations)
-- `DELETE /api/carts/items/:product_id` - Remove specific item or variation (use query parameters `color_index` & `size_index` to target specific variations)
-- `POST /api/carts/set-note` - Add checkout message/delivery notes
-- `POST /api/carts/checkout` - Checkout (clears cart and snapshots details into a new Order)
-- `DELETE /api/carts` - Clear the entire cart
+**`GET /api/carts`** — Retrieve user's current shopping cart
+No body.
+
+**`POST /api/carts`** — Add item, or update quantity for a matching product + variation
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `product_id` | string | ✅ | |
+| `quantity` | number | ✅ | positive integer |
+| `has_variation` | boolean | ❌ | |
+| `variation` | object | ❌ | `{ color_index, size_index }`, both optional numbers |
+
+If an item with the same `product_id` and `variation` is already in the cart, its quantity is overwritten rather than a duplicate line being added.
+
+**`POST /api/carts/set-note`** — Add checkout message/delivery notes
+| Field | Type | Required |
+|---|---|---|
+| `note` | string | ❌ |
+
+**`POST /api/carts/checkout`** — Checkout
+No body. Snapshots the cart's current items into a new Order (freezing price/title at time of purchase), then clears the cart.
+
+**`DELETE /api/carts`** — Clear the entire cart
+No body.
 
 ---
 
 ### 💬 Social & Reviews (Customers Only)
 
-- `GET /api/likes?product_id=:id` - Get list of likes for a product
-- `POST /api/likes` - Like a product *(Auth required)*
-- `DELETE /api/likes/:product_id` - Unlike a product *(Auth required)*
-- `GET /api/ratings?product_id=:id` - Fetch product reviews & average rating
-- `POST /api/ratings` - Submit/Upsert a rating (1-5 stars) and optional review text *(Auth required)*
-- `DELETE /api/ratings/:product_id` - Delete rating *(Auth required)*
-- `GET /api/reviews?product_id=:id` - Fetch discussion thread for a product
-- `POST /api/reviews` - Post comments/discussions on a product *(Auth required)*
-- `PATCH /api/reviews/:id` - Edit post *(Author only)*
-- `DELETE /api/reviews/:id` - Delete post *(Author only)*
+**`GET /api/likes?product_id=:id`** — Get list of likes for a product
+No body — public route.
+
+**`POST /api/likes`** — Like a product *(Auth required)*
+| Field | Type | Required |
+|---|---|---|
+| `product_id` | string | ✅ |
+
+Returns `409` if this user already liked the product.
+
+**`DELETE /api/likes/:product_id`** — Unlike a product *(Auth required)*
+No body.
+
+**`GET /api/ratings?product_id=:id`** — Fetch product ratings & average
+No body — public route.
+
+**`POST /api/ratings`** — Submit/Upsert a rating *(Auth required)*
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `product_id` | string | ✅ | |
+| `value` | number | ✅ | integer, 1–5 |
+| `text` | string | ❌ | optional review text |
+
+One rating per user per product — resubmitting updates the existing rating rather than creating a second one.
+
+**`DELETE /api/ratings/:product_id`** — Delete rating *(Auth required)*
+No body.
+
+**`GET /api/reviews?product_id=:id`** — Fetch reviews for a product
+No body — public route.
+
+**`POST /api/reviews`** — Post a review *(Auth required)*
+| Field | Type | Required |
+|---|---|---|
+| `product_id` | string | ✅ |
+| `text` | string | ✅ |
+
+**`PATCH /api/reviews/:id`** — Edit review *(Author only)*
+| Field | Type | Required |
+|---|---|---|
+| `text` | string | ✅ |
+
+**`DELETE /api/reviews/:id`** — Delete review *(Author only)*
+No body.
 
 ---
 
 ### 📊 Sales Tracking (Merchants Only)
 
-- `GET /api/sales` - Retrieve itemized list of sales, line totals, and overall revenue generated by the merchant's store products.
+**`GET /api/sales`** — Retrieve itemized list of sales, line totals, and overall revenue *(Auth required)*
+No body — returns every line item this merchant has sold, pulled from any order containing at least one of their products, plus a `total_revenue` sum.
 
 ---
 
@@ -151,6 +324,7 @@ All Auth routes support both HTTP-only Cookies and Bearer tokens.
 
 1. **Mass Assignment Prevention**: Input schema validation enforces safe parsing. Extra/unregistered request body keys are strictly stripped before reaching database query filters or updates.
 2. **Double Token Domains**: Prevents token replaying. Merchant keys are signed with different secrets than User keys so authorization boundaries cannot be breached.
-3. **Token Reuse Detection**: If a refresh token is used after already being invalidated or replaced, authorization is instantly revoked for all active sessions of that account.
+3. **Token Reuse Detection**: If a refresh token is used after already being invalidated or replaced, authorization is instantly revoked for that account's session.
 4. **Data Sanitization**: Recursively strips and sanitizes potential XSS scripts from raw request bodies while safely preserving data structures like dates and MongoDB object references.
-5. **Rate Limiting & Protection**: Helmet secures HTTP headers, Rate limits mitigate brute-force/DDoS requests, and CORS controls cross-origin domains.
+5. **Rate Limiting & Protection**: Helmet secures HTTP headers, rate limits mitigate brute-force/DDoS requests, and CORS controls cross-origin domains.
+6. **Merchant Approval Gate**: New merchants default to `status: "pending"` and cannot create products until manually approved.
