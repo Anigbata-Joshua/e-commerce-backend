@@ -8,7 +8,7 @@ export const sanitizeInput = (val) => {
     if (Array.isArray(val)) {
         return val.map(sanitizeInput);
     }
-    if (val !== null && typeof val === 'object') {
+    if (val !== null && typeof val === 'object' && val.constructor === Object) {
         const cleaned = {};
         for (const key of Object.keys(val)) {
             cleaned[key] = sanitizeInput(val[key]);

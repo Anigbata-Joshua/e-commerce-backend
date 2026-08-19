@@ -1,5 +1,6 @@
 import multer from 'multer';
 import path from 'path';
+import ApiError from '../utils/ApiError.js';
 
 const storage = multer.memoryStorage();
 
@@ -16,7 +17,7 @@ const upload = multer({
         if (isImageMime || isImageExt) {
             cb(null, true);
         } else {
-            cb(new Error('Only image files are allowed'));
+            cb(new ApiError(400, 'Only image files are allowed'));
         }
     },
 });

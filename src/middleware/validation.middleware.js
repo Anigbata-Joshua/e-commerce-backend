@@ -5,7 +5,7 @@ import ApiError from '../utils/ApiError.js';
 // Reusable middleware to validate request body using a Zod schema
 export const validate = (schema) => (req, res, next) => {
     try {
-        schema.parse(req.body);
+        req.body = schema.parse(req.body);
         next();
     } catch (err) {
         if (err instanceof z.ZodError) {

@@ -98,3 +98,43 @@ export const clearCart = asyncHandler(async (req, res) => {
     await Cart.findOneAndUpdate({ user: req.user._id }, { items: [], note: '' });
     res.status(200).json({ success: true, message: 'Cart cleared' });
 });
+
+// @route   DELETE /api/carts/items/:product_id
+// @access  Authenticated user
+export const removeCartItem = asyncHandler(async (req, res) => {
+    const { product_id } = req.params;
+    const { color_index, size_index } = req.query;
+
+    const cart = await Cart.findOne({ user: req.user._id });
+    if (!cart) {
+        throw new ApiError(404, 'Cart not found');
+    }
+
+    const initialLength = cart.items.length;
+
+    cart.items = cart.items.filter((item) => {
+        const isMatch = item.product.toString() === product_id;
+        if (!isMatch) return true; // Keep items of other products
+
+        // If specific variation query parameters are provided, match them
+        if (color_index !== undefined || size_index !== undefined) {
+            const itemColor = item.variation?.color_index;
+            const itemSize = item.variation?.size_index;
+            
+            const matchColor = color_index !== undefined ? String(itemColor) === String(color_index) : true;
+            const matchSize = size_index !== undefined ? String(itemSize) === String(size_index) : true;
+
+            return !(matchColor && matchSize); // filter out if both match
+        }
+
+        // If no variation parameters are provided, filter out all items of this product
+        return false;
+    });
+
+    if (cart.items.length === initialLength) {
+        throw new ApiError(404, 'Item not found in cart');
+    }
+
+    await cart.save();
+    res.status(200).json({ success: true, cart });
+});
