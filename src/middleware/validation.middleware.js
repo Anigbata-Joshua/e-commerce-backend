@@ -9,7 +9,7 @@ export const validate = (schema) => (req, res, next) => {
         next();
     } catch (err) {
         if (err instanceof z.ZodError) {
-            const errorMessages = err.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
+            const errorMessages = err.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
             return next(new ApiError(400, errorMessages));
         }
         next(err);

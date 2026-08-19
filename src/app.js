@@ -9,6 +9,7 @@ import userRoutes from './routes/user.route.js';
 import merchantRoutes from './routes/merchant.route.js';
 import categoryRoutes from './routes/category.route.js';
 import productRoutes from './routes/product.route.js';
+import cartRoutes from './routes/cart.route.js'
 
 const app = express();
 
@@ -52,7 +53,6 @@ app.use('/api/merchants/register', authLimiter);
 app.use('/api/merchants/login', authLimiter);
 app.use('/api/users/register', authLimiter);
 app.use('/api/users/login', authLimiter);
-app.use('/api/products', productRoutes);
 
 app.use(express.json());
 app.use(sanitizeBody);
@@ -61,6 +61,9 @@ app.use(sanitizeBody);
 app.use('/api/merchants', merchantRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/carts', cartRoutes);
+
 
 app.use(errorHandler); // must be last
 
