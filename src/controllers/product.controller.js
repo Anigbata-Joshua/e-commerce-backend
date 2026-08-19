@@ -44,6 +44,10 @@ export const getProduct = asyncHandler(async (req, res) => {
 // @route   POST /api/products
 // @access  Authenticated merchant
 export const createProduct = asyncHandler(async (req, res) => {
+    if (req.merchant.status !== 'approved') {
+        throw new ApiError(403, 'Your account must be approved before you can create products');
+    }
+
     // Category must belong to this merchant — prevents attaching a product
     // to another store's category.
     const category = await Category.findOne({ _id: req.body.category_id, merchant: req.merchant._id });
