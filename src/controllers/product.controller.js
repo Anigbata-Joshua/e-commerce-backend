@@ -2,6 +2,7 @@ import Product from '../models/product.model.js';
 import Category from '../models/category.model.js';
 import ApiError from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
+import { uploadToCloudinary } from '../utils/uploadToCloudinary.js';
 
 // @route   GET /api/products?merchant_id=&category_id=&search=&page=&limit=
 // @access  Public
@@ -80,6 +81,26 @@ export const updateProduct = asyncHandler(async (req, res) => {
     }
 
     Object.assign(product, rest);
+    await product.save();
+
+    res.status(200).json({ success: true, product });
+});
+
+export const addProductImages = asyncHandler(async (req, res) => {
+    const product = await Product.findOne({ _id: req.params.id, merchant: req.merchant._id });
+    if (!product) {
+        throw new ApiError(404, 'Product not found');
+    }
+
+    if (!req.files || req.files.length === 0) {
+        throw new ApiError(400, 'No images provided');
+    }
+
+    const uploadedUrls = await Promise.all(
+        req.files.map((file) => uploadToCloudinary(file.buffer))
+    );
+
+    product.images.push(...uploadedUrls);
     await product.save();
 
     res.status(200).json({ success: true, product });

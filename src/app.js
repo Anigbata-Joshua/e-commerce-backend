@@ -9,7 +9,11 @@ import userRoutes from './routes/user.route.js';
 import merchantRoutes from './routes/merchant.route.js';
 import categoryRoutes from './routes/category.route.js';
 import productRoutes from './routes/product.route.js';
-import cartRoutes from './routes/cart.route.js'
+import cartRoutes from './routes/cart.route.js';
+import likeRoutes from './routes/like.routes.js';
+import ratingRoutes from './routes/rating.route.js';
+import reviewRoutes from './routes/review.route.js';
+import salesRoutes from './routes/sales.route.js';
 
 const app = express();
 
@@ -63,6 +67,10 @@ app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/carts', cartRoutes);
+app.use('/api/likes', likeRoutes);
+app.use('/api/ratings', ratingRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/sales', salesRoutes);
 
 
 app.use(errorHandler); // must be last
