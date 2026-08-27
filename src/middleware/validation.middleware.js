@@ -190,3 +190,8 @@ export const addCartItemSchema = z.object({
 export const setCartNoteSchema = z.object({
     note: z.string().optional(),
 });
+
+// ---------- Sales / Order status ----------
+export const updateOrderStatusSchema = z.object({
+    status: z.enum(['pending', 'paid', 'shipped', 'completed', 'cancelled']),
+});
