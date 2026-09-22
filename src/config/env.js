@@ -40,6 +40,9 @@ export const env = {
     jwtUserRefreshSecret: required('JWT_USER_REFRESH_SECRET'),
     jwtUserRefreshExpiresIn: process.env.JWT_USER_REFRESH_EXPIRATION || '7d',
 
+    // Automation
+    n8nLowStockWebhookUrl: process.env.N8N_LOW_STOCK_WEBHOOK_URL || '',
+
     // Rate limiter
     rateLimit: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
     rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),

@@ -1,10 +1,13 @@
 import Order from '../models/order.model.js';
+import Product from '../models/product.model.js';
 import ApiError from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
+import axios from 'axios';
+import { env } from '../config/env.js';
+import Merchant from '../models/merchant.model.js';
 
-// Only 'paid' represents confirmed revenue now — 'shipped'/'completed'
-// are no longer reachable via updateOrderStatus (see validation schema).
 const CONFIRMED_STATUSES = ['paid'];
+const LOW_STOCK_THRESHOLD = 5;
 
 // @route   GET /api/sales — every line item this merchant has sold, pulled
 // from any order that contains at least one of their products. Revenue
@@ -65,18 +68,58 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
         throw new ApiError(404, 'Order not found');
     }
 
-    // Same 404-not-403 pattern as product/category ownership checks — a
-    // merchant with no items on this order shouldn't be able to tell an
-    // order they can't touch apart from one that doesn't exist at all.
-    const ownsItem = order.items.some(
+    const merchantItems = order.items.filter(
         (item) => item.merchant.toString() === merchantId.toString()
     );
-    if (!ownsItem) {
+    if (merchantItems.length === 0) {
         throw new ApiError(404, 'Order not found');
     }
 
+    const wasAlreadyPaid = order.status === 'paid';
     order.status = status;
     await order.save();
 
+    // Only decrement stock the first time an order is confirmed paid —
+    // guards against double-decrementing if status is set to 'paid' twice
+    // or moved paid -> shipped -> paid again.
+    if (status === 'paid' && !wasAlreadyPaid) {
+        await Promise.all(
+            merchantItems.map((item) => decrementStockAndCheck(item))
+        );
+    }
+
     res.status(200).json({ success: true, order });
 });
+
+async function decrementStockAndCheck(item) {
+    const product = await Product.findById(item.product);
+    if (!product) return;
+
+    const newQuantity = Math.max(0, product.quantity - item.quantity);
+    product.quantity = newQuantity;
+    await product.save();
+
+    if (newQuantity <= LOW_STOCK_THRESHOLD) {
+        notifyLowStock(product).catch((err) => {
+            console.error('Low-stock webhook failed:', err.message);
+        });
+    }
+}
+
+async function notifyLowStock(product) {
+    if (!env.n8nLowStockWebhookUrl) return;
+
+    const merchant = await Merchant.findById(product.merchant).select('email store_name');
+    if (!merchant) return;
+
+    await axios.post(env.n8nLowStockWebhookUrl, {
+        productId: product._id,
+        merchantId: product.merchant,
+        merchantEmail: merchant.email,
+        storeName: merchant.store_name,
+        title: product.title,
+        quantity: product.quantity,
+        threshold: LOW_STOCK_THRESHOLD,
+        timestamp: new Date().toISOString(),
+    });
+}
